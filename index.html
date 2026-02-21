@@ -1,1 +1,194 @@
-index.html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Triadic Math Explorer</title>
+<style>
+    body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #0f172a;
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h1 {
+        margin: 15px 0 5px 0;
+    }
+
+    #controls {
+        margin: 10px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        background: #2563eb;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #1d4ed8;
+    }
+
+    #info {
+        margin: 10px;
+        font-size: 14px;
+        opacity: 0.85;
+    }
+
+    canvas {
+        background: #020617;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        touch-action: manipulation;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>Triadic Math Explorer</h1>
+<div id="info">Click two numbers to see multiplication as movement</div>
+
+<div id="controls">
+    <button onclick="reset()">Reset</button>
+    <button onclick="hideResult()">Hide Result</button>
+    <button onclick="showResult()">Show Result</button>
+</div>
+
+<canvas id="field" width="500" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("field");
+const ctx = canvas.getContext("2d");
+
+let hidden = false;
+let selected = [];
+let lines = [];
+
+const positions = {
+    0:{x:250,y:320},
+    1:{x:180,y:180},
+    2:{x:320,y:180},
+    3:{x:120,y:380},
+    4:{x:180,y:380},
+    5:{x:320,y:380},
+    6:{x:380,y:380},
+    7:{x:200,y:280},
+    8:{x:300,y:280},
+    9:{x:250,y:120}
+};
+
+function digitalRoot(n){
+    return n % 9 === 0 ? 9 : n % 9;
+}
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // triangle
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(120,380);
+    ctx.lineTo(380,380);
+    ctx.lineTo(250,120);
+    ctx.closePath();
+    ctx.stroke();
+
+    // lines
+    ctx.strokeStyle = "#22d3ee";
+    ctx.lineWidth = 2;
+    lines.forEach(l=>{
+        ctx.beginPath();
+        ctx.moveTo(l.x1,l.y1);
+        ctx.lineTo(l.x2,l.y2);
+        ctx.stroke();
+    });
+
+    // nodes
+    for(let n in positions){
+        let p = positions[n];
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,18,0,Math.PI*2);
+        ctx.fillStyle = "#2563eb";
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.font = "bold 14px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(n,p.x,p.y);
+    }
+}
+
+function getClickedNode(x,y){
+    for(let n in positions){
+        let p = positions[n];
+        let d = Math.hypot(x-p.x,y-p.y);
+        if(d < 18) return parseInt(n);
+    }
+    return null;
+}
+
+canvas.addEventListener("click", e=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    let n = getClickedNode(x,y);
+    if(n !== null){
+        selected.push(n);
+    }
+
+    if(selected.length === 2){
+        let a = selected[0];
+        let b = selected[1];
+        let r = digitalRoot(a*b);
+
+        let p1 = positions[a];
+        let p2 = positions[r];
+
+        lines.push({x1:p1.x,y1:p1.y,x2:p2.x,y2:p2.y});
+
+        if(!hidden){
+            ctx.beginPath();
+            ctx.arc(p2.x,p2.y,22,0,Math.PI*2);
+            ctx.strokeStyle = "#fde047";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+
+        selected = [];
+        draw();
+    }
+});
+
+function reset(){
+    lines = [];
+    selected = [];
+    draw();
+}
+
+function hideResult(){
+    hidden = true;
+}
+
+function showResult(){
+    hidden = false;
+}
+
+draw();
+</script>
+
+</body>
+</html>
